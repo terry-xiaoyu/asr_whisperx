@@ -1,0 +1,16 @@
+[project]
+name = "asr-whisperx"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "fastapi>=0.120.3",
+    "python-multipart>=0.0.20",
+    "uvicorn>=0.38.0",
+    "whisperx",
+]
+
+[tool.uv.sources]
+whisperx = { git = "https://github.com/m-bain/whisperX.git" }

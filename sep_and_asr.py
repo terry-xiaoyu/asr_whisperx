@@ -71,14 +71,27 @@ def transcribe(audio):
     return result
 
 async def separate_and_transcribe(contents: bytes):
-    waveform, sample_rate = torchaudio.load(io.BytesIO(contents))
-    diarization, sources = pipeline({"waveform": waveform, "sample_rate": sample_rate})
     results = []
+    waveform, sample_rate = torchaudio.load(io.BytesIO(contents))
+    try:
+        _diarization, sources = pipeline({"waveform": waveform, "sample_rate": sample_rate})
+    except IndexError:
+        logger.error("No speech detected or audio too short for separation.")
+        return []
+
+    if not sources:
+        logger.error("Separation pipeline returned no sources.")
+        return []
+
+    # If sources is empty, return an error
+    if sources.data.size == 0:
+        logger.error("No non-silent segments found in audio.")
+        return []
 
     # Launch concurrent transcriptions in threads (whisperx transcribe is blocking / GPU-bound)
     tasks = []
-    for s, _speaker in enumerate(diarization.labels()):
-        audio_source = sources.data[:, s].astype(np.float32)
+    for col in sources.data.T:
+        audio_source = col.astype(np.float32)
         tasks.append(asyncio.to_thread(transcribe, audio_source))
 
     transcriptions = await asyncio.gather(*tasks)

@@ -31,14 +31,15 @@ compute_type = "float16"  # change to "int8" if low on GPU mem (may reduce accur
 
 # Load heavy models once at startup
 logging.info("Loading WhisperX ASR model...")
-model = whisperx.load_model("large-v3", device, compute_type=compute_type)
+model = whisperx.load_model("large-v3", device, language="zh", compute_type=compute_type)
+
 logging.info("Loading diarization pipeline...")
 diarize_model = DiarizationPipeline(use_auth_token=hf_token, device=device)
 
-logging.info("--loading align model")
-model_a, metadata = whisperx.load_align_model(
-    language_code=language_code, device=device
-)
+# logging.info("--loading align model")
+# model_a, metadata = whisperx.load_align_model(
+#     language_code=language_code, device=device
+# )
 
 app = FastAPI(title="WhisperX ASR Upload API")
 
@@ -71,7 +72,7 @@ async def upload_audio(file: UploadFile = File(...)):
 
         # 3. Assign speaker labels
         logging.info("--diarizing")
-        diarize_segments = diarize_model(audio)  # pass audio bytes directly
+        diarize_segments = diarize_model(audio, max_speakers=3)  # pass audio bytes directly
         result = whisperx.assign_word_speakers(diarize_segments, result)
         logging.info(f"--diarize segs assigned: {result}")
         # Convert to JSON-serializable structure and return

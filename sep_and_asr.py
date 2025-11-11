@@ -51,8 +51,10 @@ async def upload_audio(file: UploadFile = File(...)):
         contents = await file.read()
         if not contents:
             raise HTTPException(status_code=400, detail="Empty file uploaded")
+        logger.info("-- Starting separation and transcription")
         results = await separate_and_transcribe(contents)
         # Convert to JSON-serializable structure and return
+        logger.info(f"-- Results: {results}")
         return JSONResponse(content=jsonable_encoder(results))
 
     finally:
